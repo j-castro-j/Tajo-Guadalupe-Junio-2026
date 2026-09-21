@@ -145,9 +145,7 @@
         lat0: 17.8579401103632, lon0: -99.6739536626923,
         offset: [428637.51373973046, 1974398.0838580697, 3.8437755266563727],
         rvec: [0.00011132995333956913, -0.00003292231694213758, -0.00043669032632740194],
-        scale: 1.0002526469530397,
-        // Punto de control solicitado por topografía para validación visual
-        controlPoint: { e: 429317.21, n: 1974268.24, z: 1508.02, label: "CONTROL GUADALUPE" }
+        scale: 1.0002526469530397
       },
       "FILOS": {
         nombre: "TAJO LOS FILOS",
@@ -185,20 +183,6 @@
     Cesium.Cesium3DTileset.fromIonAssetId(activeZone.assetId, { maximumScreenSpaceError: 2 })
     .then(function(tileset) {
       currentTileset = tileset; viewer.scene.primitives.add(tileset); perspectiveView();
-      
-      // Dibujar punto de control si la zona tiene uno configurado
-      if (activeZone.controlPoint) {
-        const cpCartesian = getCartesianFromLocal(activeZone.controlPoint.e, activeZone.controlPoint.n, activeZone.controlPoint.z, activeZone);
-        viewer.entities.add({
-          position: cpCartesian,
-          point: { pixelSize: 14, color: Cesium.Color.RED, outlineColor: Cesium.Color.WHITE, outlineWidth: 3, disableDepthTestDistance: Number.POSITIVE_INFINITY },
-          label: {
-            text: `${activeZone.controlPoint.label}\nE: ${activeZone.controlPoint.e}\nN: ${activeZone.controlPoint.n}\nZ: ${activeZone.controlPoint.z}`,
-            font: 'bold 12px monospace', style: Cesium.LabelStyle.FILL_AND_OUTLINE, fillColor: Cesium.Color.LIME, outlineColor: Cesium.Color.BLACK, outlineWidth: 3,
-            verticalOrigin: Cesium.VerticalOrigin.BOTTOM, pixelOffset: new Cesium.Cartesian2(0, -15), disableDepthTestDistance: Number.POSITIVE_INFINITY
-          }
-        });
-      }
 
       tileset.loadProgress.addEventListener(function(pendingRequests, processingTiles) {
         const loader = document.getElementById('loadingBar');
@@ -250,18 +234,6 @@
         n: localNorthing.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
         z: localElevation.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
       };
-    }
-
-    // Solucionador iterativo para encontrar el WGS84 de una coordenada local (Para dibujar el Pin de Control)
-    function getCartesianFromLocal(targetE, targetN, targetZ, zone) {
-      let lat = Cesium.Math.toRadians(zone.lat0); let lon = Cesium.Math.toRadians(zone.lon0); let h = targetZ;
-      for(let i=0; i<10; i++) {
-        let cur = getMinePlanCoordinates(new Cesium.Cartographic(lon, lat, h), zone);
-        let dE = targetE - cur.rawE; let dN = targetN - cur.rawN; let dZ = targetZ - cur.rawZ;
-        if (Math.abs(dE) < 0.001 && Math.abs(dN) < 0.001 && Math.abs(dZ) < 0.001) break;
-        lat += dN / 6378137.0; lon += dE / (6378137.0 * Math.cos(lat)); h += dZ;
-      }
-      return Cesium.Cartesian3.fromRadians(lon, lat, h);
     }
 
     const coordsHandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
